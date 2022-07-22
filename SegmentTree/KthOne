@@ -1,0 +1,57 @@
+struct seg_tree {
+
+    int sz;
+    vector<int> val;
+
+    void init(int x) {
+        sz = 1;
+        while(sz < x) sz *= 2;
+        val.resize(sz * 2);
+    }
+
+    int merge(int a, int b) {
+        return a + b;
+    }
+
+    void build(int node, int l, int r, vector<int>& a) {
+        if (r - l == 1) {
+            if (l < a.size()) {
+                val[node] = a[l];
+            }
+            return;
+        }
+        int mid = (l + r) / 2;
+        build(node * 2 + 1, l, mid, a);
+        build(node * 2 + 2, mid, r, a);
+        val[node] = merge(val[node * 2 + 1], val[node * 2 + 2]);
+    }   
+
+    void build(vector<int>& a) {
+        build(0, 0, sz, a);
+    }
+
+    void upd(int node, int l, int r, int pos, ll x) {
+        if (r - l == 1) {
+            val[node] = x;
+            return;
+        }
+        int mid = (l + r) / 2;
+        if (mid > pos) upd(node * 2 + 1, l, mid, pos, x);
+        if (mid <= pos) upd(node * 2 + 2, mid, r, pos, x);
+        val[node] = merge(val[node * 2 + 1], val[node * 2 + 2]);
+    }
+    void upd(int pos, int x) {
+        upd(0, 0, sz, pos, x);
+    }
+
+    int ask(int node, int l, int r, int pos) {
+        int mid = (l + r) / 2;
+        if (r - l == 1) return l;
+        if (val[node * 2 + 1] > pos) {
+            ask(node * 2 + 1, l, mid, pos);
+        } else ask(node * 2 + 2, mid, r, pos - val[node * 2 + 1]);
+    }
+    int ask(int pos) {
+        return ask(0, 0, sz, pos);
+    }
+};

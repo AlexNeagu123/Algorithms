@@ -1,0 +1,127 @@
+struct segment_tree {
+ 
+    int size;
+ 
+    vector<int> val;
+    vector<int> lazy;
+ 
+    void init(int n) {
+ 
+        size = 1;
+        while(size < n) size *= 2;
+ 
+        val.assign(size * 2, 0);
+        lazy.assign(size * 2, false);
+ 
+    }
+ 
+    int merge(int a, int b) {
+        return a + b;
+    }
+    
+    void build(int node, int l, int r, vector<int>&a) {
+        if(r - l == 1) {
+            if (l < a.size()) {
+                val[node] = a[l];
+            } else {
+                val[node] = neutral;
+            }
+            return;
+        }
+
+        int mid = (l + r) / 2;
+        
+        build(node * 2 + 1, l, mid, a);
+        build(node * 2 + 2, mid, r, a);
+
+        val[node] = merge(val[node * 2 + 1], val[node * 2 + 2]);
+
+    }
+    void build(vector<int>&a) {
+        build(0, 0, size, a);
+    }
+
+    void add_lazy(int &a, int x) {
+        a ^= x;
+    }
+
+    void add_val(int &a, int x, int len) {
+        if (x == 1) {
+            a = len - a;
+        }
+    }
+
+    void propagate(int node, int l, int r) {
+ 
+        if (l == r - 1) {
+            return;
+        }
+        
+        int mid = (l + r) / 2;
+
+        for(int x : {2 * node + 1, 2 * node + 2}) {
+        
+            add_val(val[x], lazy[node], mid - l);
+            add_lazy(lazy[x], lazy[node]);
+ 
+        }
+ 
+        lazy[node] = 0;
+ 
+    }
+ 
+    void add(int node, int lf, int rg, int l, int r) {
+ 
+        propagate(node, l, r);
+ 
+        if (l >= rg || r <= lf) return;
+ 
+        if (l >= lf && r <= rg) {
+            
+            add_lazy(lazy[node], 1);
+            add_val(val[node], 1, r - l);
+ 
+            return;
+        }
+ 
+        int mid = (l + r) / 2;
+ 
+        add(node * 2 + 1, lf, rg, l, mid);
+        add(node * 2 + 2, lf, rg, mid, r);
+ 
+        val[node] = merge(val[node * 2 + 1], val[node * 2 + 2]);
+ 
+    }
+ 
+    void add(int l, int r) {
+ 
+        add(0, l, r, 0, size);
+ 
+    }
+ 
+    int get(int node, int pos, int l, int r) {
+ 
+        propagate(node, l, r);
+ 
+        if  (l == r - 1) {
+            return l;
+        }
+
+        int mid = (l + r) / 2;
+
+        // 1
+        // 2
+        if (val[node * 2 + 1] > pos) {
+            return get(node * 2 + 1, pos, l, mid);
+        }
+        else  {
+            return get(node * 2 + 2, pos - val[node * 2 + 1], mid, r);
+        }
+        
+    }
+    int get(int pos) {
+ 
+        return get(0, pos, 0, size);
+ 
+    }
+};
