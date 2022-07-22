@@ -1,0 +1,45 @@
+const int N = 200005;
+const int L = 21;
+vector < int > E[N];
+vector < vector < int > > dp(N, vector < int > (L + 1, 1));
+int n, m, x, y, tin[N], tout[N], level[N], cnt = 0;
+void dfs(int node, int pred, int lev) {
+    if (node != 1) {
+        dp[node][0] = pred;
+        for (int i = 1; i <= L; i++) {
+            dp[node][i] = dp[dp[node][i - 1]][i - 1];
+        }
+    }
+    level[node] = lev;
+    tin[node] = ++cnt;
+    for (auto it : E[node]) {
+        if (it != pred) {
+            dfs(it, node, lev + 1);
+        }
+    }
+    tout[node] = ++cnt;
+}
+bool is_ancestor(int x, int y) {
+    if (tin[y] >= tin[x] && tout[x] >= tout[y]) {
+        return true;
+    }
+    return false;
+}
+int compute_lca(int x, int y) {
+    if (is_ancestor(x, y)) {
+        return x;
+    }
+    if (is_ancestor(y, x)) {
+        return y;
+    } 
+    for (int i = L; i >= 0; i--) {
+        if (!is_ancestor(dp[x][i], y)) {
+            x = dp[x][i];
+        }
+    }
+    return dp[x][0];
+} 
+int dist(int x, int y) {
+    int z = compute_lca(x, y);
+    return level[x] + level[y] - 2 * level[z];
+}
