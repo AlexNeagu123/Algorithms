@@ -1,0 +1,67 @@
+class seg_tree {
+    // build(vector) - put all initial values into the segtree (vector is 0 indexed, and contains 0-1)
+    // upd(pos) - invert the elements from position pos 
+    // ask(nth) - find the nth one (indexed from zero)
+    int B;
+    vector<int> T;
+ 
+ public:
+    
+    seg_tree(int x) {
+        B = 1;
+        while(B < x) B *= 2;
+        T.resize(B * 2);
+    }
+
+    int merge(int a, int b) {
+        return a + b;
+    }
+ 
+    void build(int node, int l, int r, vector<int>& a) {
+        if (r - l == 1) {
+            if (l < a.size()) {
+                T[node] = a[l];
+            }
+            return;
+        }
+        int mid = (l + r) / 2;
+        build(node * 2 + 1, l, mid, a);
+        build(node * 2 + 2, mid, r, a);
+        T[node] = merge(T[node * 2 + 1], T[node * 2 + 2]);
+    }   
+    void build(vector<int> &a) {
+        build(0, 0, B, a);
+    }
+ 
+    void upd(int node, int l, int r, int pos) {
+        if (r - l == 1) {
+            T[node] ^= 1;
+            return;
+        }
+        int mid = (l + r) / 2;
+        if (mid > pos) upd(node * 2 + 1, l, mid, pos);
+        if (mid <= pos) upd(node * 2 + 2, mid, r, pos);
+        T[node] = merge(T[node * 2 + 1], T[node * 2 + 2]);
+    }
+    void upd(int pos) {
+        upd(0, 0, B, pos);
+    }
+ 
+    int ask(int node, int l, int r, int nth) {
+        if(T[node] < nth + 1) {
+            return -1;
+        }
+        if(r - l == 1) {
+            return l;
+        }
+        int mid = (l + r) / 2;
+        int ans = ask(node * 2 + 1, l, mid, nth);
+        if(ans == -1) {
+            ans = ask(node * 2 + 2, mid, r, nth - T[node * 2 + 1]);
+        }
+        return ans;
+    }
+    int ask(int nth) {
+        return ask(0, 0, B, nth);
+    }
+};

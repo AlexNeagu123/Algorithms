@@ -1,0 +1,73 @@
+struct segment {
+    int pre, suf, whole, sum;
+    segment(int x) : pre(x), suf(x), whole(x), sum(x) {};
+    segment(int _pre, int _suf, int _whole, int _sum) : pre(_pre), suf(_suf), whole(_whole), sum(_sum) {};
+};
+
+class seg_tree {
+    // build(vector) - put all initial values into the segtree (vector is 0 indexed)
+    // upd(pos, x) - update element on position pos to x 
+    // ask(l, r) - maximum subsegment sum from interval [l, r) (returned as a struct segment with components pre, suf, whole, sum)
+    // segment.whole is the actua maximum sum
+    int B;
+    vector<segment> T;
+ 
+ public:
+    
+    seg_tree(int x) {
+        B = 1;
+        while(B < x) B *= 2;
+        T.assign(B * 2, segment(-INF));
+    }
+
+    segment merge(segment lson, segment rson) {
+        int sum = lson.sum + rson.sum;
+        int pre = max(lson.pre, lson.sum + rson.pre);
+        int suf = max(rson.suf, rson.sum + lson.suf);
+        int whole = max({lson.whole, rson.whole, lson.suf + rson.pre});
+        return segment(pre, suf, whole, sum);
+    }
+ 
+    void build(int node, int l, int r, vector<int>& a) {
+        if (r - l == 1) {
+            if (l < a.size()) {
+                T[node] = segment(a[l]);
+            }
+            return;
+        }
+        int mid = (l + r) / 2;
+        build(node * 2 + 1, l, mid, a);
+        build(node * 2 + 2, mid, r, a);
+        T[node] = merge(T[node * 2 + 1], T[node * 2 + 2]);
+    }   
+    void build(vector<int> &a) {
+        build(0, 0, B, a);
+    }
+ 
+    void upd(int node, int l, int r, int pos, int x) {
+        if (r - l == 1) {
+            T[node] = segment(x);
+            return;
+        }
+        int mid = (l + r) / 2;
+        if (mid > pos) upd(node * 2 + 1, l, mid, pos, x);
+        if (mid <= pos) upd(node * 2 + 2, mid, r, pos, x);
+        T[node] = merge(T[node * 2 + 1], T[node * 2 + 2]);
+    }
+    void upd(int pos, int x) {
+        upd(0, 0, B, pos, x);
+    }
+    segment ask(int node, int l, int r, int lf, int rg) {
+        if(l >= rg || r <= lf) {
+            return segment(-INF);
+        }
+        if(l >= lf && r <= rg) {
+            return T[node];
+        }
+        int mid = (l + r) / 2;
+        return merge(ask(node * 2 + 1, l, mid, lf, rg), ask(node * 2 + 2, mid, r, lf, rg));
+    }
+    segment ask(int l, int r) {
+        return ask(0, 0, B, l, r);
+    }
+};
