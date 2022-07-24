@@ -1,0 +1,60 @@
+class seg_tree {
+    // build(vector) - put all initial values into the segtree (vector is 0 indexed)
+    // upd(pos, x) - element from position pos becomes x (assignment)
+    // ask(l, r) - whatever operation is in merge from interval [l, r) (without r)
+    int B;
+    vector<int> T;
+ 
+ public:
+    
+    seg_tree(int x) {
+        B = 1;
+        while(B < x) B *= 2;
+        T.resize(B * 2);
+    }
+
+    int merge(int a, int b) {
+        return min(a, b);
+    }
+ 
+    void build(int node, int l, int r, vector<int>& a) {
+        if (r - l == 1) {
+            if (l < a.size()) {
+                T[node] = a[l];
+            }
+            return;
+        }
+        int mid = (l + r) / 2;
+        build(node * 2 + 1, l, mid, a);
+        build(node * 2 + 2, mid, r, a);
+        T[node] = merge(T[node * 2 + 1], T[node * 2 + 2]);
+    }   
+    void build(vector<int> &a) {
+        build(0, 0, B, a);
+    }
+ 
+    void upd(int node, int l, int r, int pos, int x) {
+        if (r - l == 1) {
+            T[node] = x;
+            return;
+        }
+        int mid = (l + r) / 2;
+        if (mid > pos) upd(node * 2 + 1, l, mid, pos, x);
+        if (mid <= pos) upd(node * 2 + 2, mid, r, pos, x);
+        T[node] = merge(T[node * 2 + 1], T[node * 2 + 2]);
+    }
+    void upd(int pos, int x) {
+        upd(0, 0, B, pos, x);
+    }
+ 
+    int ask(int node, int l, int r, int st, int dr) {
+        if (dr <= l || st >= r) return 2e9;
+        if (l >= st && r <= dr) return T[node];
+        int mid = (l + r) / 2;
+        return merge(ask(node * 2 + 1, l, mid, st, dr),
+            ask(node * 2 + 2, mid, r, st, dr));
+    }
+    int ask(int st, int dr) {
+        return ask(0, 0, B, st, dr);
+    }
+};
