@@ -1,0 +1,82 @@
+class seg_tree {
+    // build(vector) - put all initial values into the segtree (vector is 0 indexed)
+    // upd(l, r, v) - assign v to the segment [l, r)
+    // ask(l, r) - minimum of elements from interval [l, r)
+    int B;
+    vector<int> T, lazy;
+    const int nope = -1;
+    // nope is a value that marks lazy[node] doesn't store anything
+ public:
+    
+    seg_tree(int x) {
+        B = 1;
+        while(B < x) B *= 2;
+        T.assign(B * 2, 0);
+        lazy.assign(B * 2, nope);
+    }
+
+    int merge(int lson, int rson) {
+        return min(lson, rson);
+    }
+    void propagate(int node, int l, int r) {
+        if(l == r - 1 || lazy[node] == nope) {
+            return;
+        }
+        int mid = (l + r) / 2;
+        for(int son : {2 * node + 1, 2 * node + 2}) {
+            T[son] = lazy[node];
+            lazy[son] = lazy[node];
+        }
+        lazy[node] = nope;
+    }
+
+    void build(int node, int l, int r, vector<int>& a) {
+        if (r - l == 1) {
+            if (l < a.size()) {
+                T[node] = a[l];
+            }
+            return;
+        }
+        int mid = (l + r) / 2;
+        build(node * 2 + 1, l, mid, a);
+        build(node * 2 + 2, mid, r, a);
+        T[node] = merge(T[node * 2 + 1], T[node * 2 + 2]);
+    }   
+    void build(vector<int> &a) {
+        build(0, 0, B, a);
+    }
+ 
+    void upd(int node, int l, int r, int lf, int rg, int x) {
+        propagate(node, l, r);
+        if(l >= rg || r <= lf) {
+            return;
+        }
+        if(l >= lf && r <= rg) {
+            T[node] = x;;
+            lazy[node] = x;
+            return;
+        }
+        int mid = (l + r) / 2;
+        upd(node * 2 + 1, l, mid, lf, rg, x);
+        upd(node * 2 + 2, mid, r, lf, rg, x);
+        T[node] = merge(T[node * 2 + 1], T[node * 2 + 2]);
+    }
+    void upd(int l, int r, int x) {
+        upd(0, 0, B, l, r, x);
+    }
+    int ask(int node, int l, int r, int lf, int rg) {
+        propagate(node, l, r);
+        if(l >= rg || r <= lf) {
+            return INF;
+        }
+        if(l >= lf && r <= rg) {
+            return T[node];
+        }
+        int mid = (l + r) / 2;
+        return merge(ask(node * 2 + 1, l, mid, lf, rg),
+            ask(node * 2 + 2, mid, r, lf, rg));
+    }
+    int ask(int l, int r) {
+        return ask(0, 0, B, l, r);
+    }
+};

@@ -1,0 +1,78 @@
+class seg_tree {
+    // build(vector) - put all initial values into the segtree (vector is 0 indexed)
+    // upd(l, r, v) - add v to all elements in interval [l, r)
+    // ask(x, limit) - ask for the smallest j such that j >= limit and a[j] >= x
+    int B;
+    vector<int> T, lazy;
+ 
+ public:
+    
+    seg_tree(int x) {
+        B = 1;
+        while(B < x) B *= 2;
+        T.assign(B * 2, 0);
+        lazy.assign(B * 2, 0);
+    }
+ 
+    int merge(int lson, int rson) {
+        return max(lson, rson);
+    }
+    
+    void propagate(int node, int l, int r) {
+        if(r - l == 1) return;
+        int mid = (l + r) / 2;
+        for(int son : {node * 2 + 1, node * 2 + 2}) {
+            T[son] +=  lazy[node];
+            lazy[son] += lazy[node];
+        }
+        lazy[node] = 0; 
+    }
+    void build(int node, int l, int r, vector<int>& a) {
+        if (r - l == 1) {
+            if (l < a.size()) {
+                T[node] = a[l];
+            }
+            return;
+        }
+        int mid = (l + r) / 2;
+        build(node * 2 + 1, l, mid, a);
+        build(node * 2 + 2, mid, r, a);
+        T[node] = merge(T[node * 2 + 1], T[node * 2 + 2]);
+    }   
+    void build(vector<int> &a) {
+        build(0, 0, B, a);
+    }
+ 
+    void upd(int node, int l, int r, int lf, int rg, int x) {
+        propagate(node, l, r);
+        if(l >= rg || r <= lf) return;  
+        if(l >= lf && r <= rg) {
+            T[node] += x;
+            lazy[node] += x;
+            return;
+        }
+        int mid = (l + r) / 2;
+        upd(node * 2 + 1, l, mid, lf, rg, x);
+        upd(node * 2 + 2, mid, r, lf, rg, x);
+        T[node] = merge(T[node * 2 + 1], T[node * 2 + 2]);
+    }
+    void upd(int l, int r, int x) {
+        upd(0, 0, B, l, r, x);
+    }
+    int ask(int node, int l, int r, int x, int limit) {
+        propagate(node, l, r);
+        if(T[node] < x || r <= limit) {
+            return -1;
+        }
+        if(r - l == 1) {
+            return l;
+        }
+        int mid = (l + r) / 2;
+        int ans = ask(node * 2 + 1, l, mid, x, limit);
+        if(ans == -1) ans = ask(node * 2 + 2, mid, r, x, limit);
+        return ans;
+    }
+    int ask(int x, int limit) {
+        return ask(0, 0, B, x, limit);
+    }
+};
