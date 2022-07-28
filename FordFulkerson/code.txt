@@ -1,0 +1,71 @@
+class FordFulk {
+    // O(N * M^2) complexity where N = number of nodes, M = number of edges
+    // value passed to the constructor should be the exact number of nodes, it is considered by default that destination(t) = N (last node)
+    // AddEdge(u, v, cap) - add the edge (u, v) with capacity cap to the graph 
+    // Compute_Flow() - compute the maximum flow with the actual stage of the graph 
+    vector<vector<int>> capacity;
+    vector<vector<int>> E;
+    int nodes, s, t;
+    const int INF = 2e9;
+public:
+    FordFulk(int _nodes) : s(1), t(_nodes), nodes(_nodes) {
+        capacity.assign(nodes + 5, vector<int> (nodes + 5, 0));
+        E.resize(nodes + 5);
+    }
+    void AddEdge(int u, int v, int cap) {
+        capacity[u][v] = cap;
+        E[u].push_back(v);
+        E[v].push_back(u);
+    }
+    int bfs(vector<int> &par) {
+        bool seen_t = false; // true if i reach t at some moment 
+        fill(par.begin(), par.end(), -1);
+        par[s] = -INF;
+        queue<int> Q;
+        Q.push(s);
+        while(Q.size()) {
+            auto cur_node = Q.front();
+            Q.pop();
+            for(auto it : E[cur_node]) {
+                if(capacity[cur_node][it] && par[it] == -1) {
+                    if(it == t) {
+                        seen_t = true;
+                        continue;
+                    }
+                    par[it] = cur_node;
+                    Q.push(it);
+                }
+            }
+        }
+        return seen_t;
+    }
+    int Compute_Flow() {
+        int flow = 0;
+        vector<int> par(nodes + 1);
+        while(bfs(par)) {
+            for(auto it : E[t]) { // optimization - from destination check every neighbour and generate some path from each 
+                if(par[it] != -1) {
+                    par[t] = it; // parent of destination becomes this neighbour 
+                    int pushed_flow = INF;
+                    int cur_node = t;
+                    // find minimum capacity in the path (this will be the pushed flow at this step)
+                    while(cur_node != s) {
+                        int prd_node = par[cur_node];
+                        pushed_flow = min(pushed_flow, capacity[prd_node][cur_node]);
+                        cur_node = prd_node;
+                    }
+                    cur_node = t;
+                    flow += pushed_flow;
+                    // update capacities, subtract from the actual edge, add to the reverse edge
+                    while(cur_node != s) {
+                        int prd_node = par[cur_node];
+                        capacity[prd_node][cur_node] -= pushed_flow;
+                        capacity[cur_node][prd_node] += pushed_flow;
+                        cur_node = prd_node;
+                    }
+                }
+            }
+        }
+        return flow;
+    }
+};
