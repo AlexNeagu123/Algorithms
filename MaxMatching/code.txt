@@ -1,0 +1,56 @@
+class BipartiteMatcher {
+    // n - vertices from first group, k - vertices from second group
+    // n should always be SMALLER than k (this improves the complexity)
+    // KUHN Algorithm with optimization - O(n * m) complexity
+    int n, k;
+    vector<vector<int>> E;
+    vector<bool> used, initially_used;
+    vector<int> from_left;
+public:
+    BipartiteMatcher(int _n, int _k) : n(_n), k(_k) {
+        E.resize(n + 1);
+        from_left.assign(k + 1, -1);
+        used.assign(n + 1, 0);
+        initially_used.assign(n + 1, 0);
+    }
+    void AddEdge(int u, int v) {
+        // u is from first group (smaller one), v is from the second group(bigger)
+        E[u].push_back(v);
+    }
+    bool match(int v) {
+        if(used[v]) return false;
+        used[v] = true;
+        for(auto it : E[v]) {
+            if(from_left[it] == -1 || match(from_left[it])) {
+                from_left[it] = v;
+                return true;
+            }
+        }
+        return false;
+    }
+    vector<pair<int,int>> compute_max_matching() {
+        // Basic Heuristic, tries to match in a greedy way and then searching augmenting paths
+        for(int v = 1; v <= n; v++) {
+            for(auto it : E[v]) {
+                if(from_left[it] == -1) {
+                    from_left[it] = v;
+                    initially_used[v] = true;
+                    break;
+                }
+            }
+        }
+        for(int v = 1; v <= n; ++v) {
+            if(!initially_used[v]) {
+                used.assign(n + 1, 0);
+                match(v);
+            }
+        }
+        vector<pair<int,int>> matching_edges;
+        for(int i = 1; i <= k; ++i) {
+            if(from_left[i] != -1) {
+                matching_edges.push_back({from_left[i], i});
+            }
+        }
+        return matching_edges;
+    }
+};
