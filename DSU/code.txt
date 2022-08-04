@@ -1,26 +1,32 @@
 class DSU {
-	int p[nax], sz[nax];
+    // unite(x, y) - combines x's compent with y's
+    // unite(x, y) == 1 if they already are in the same component 
+    // unite(x, y) == 0 if they aren't in the same component and the merging took place 
+    vector<int> p, sz;
+    int n;
 public :
-	DSU() {
-		for(int i = 0; i < nax; ++i) {
-			p[i] = i;
-			sz[i] = 1;
-		}
-	}
-	int get(int x) {
-		return x == p[x] ? x : x = get(p[x]);
-	}
-	int unite(int x, int y) {
-		x = get(x);
-		y = get(y);
-		if(x == y) {
-			return 1;
-		}
-		if(sz[x] > sz[y]) {
-			swap(x, y);
-		}
-		p[x] = y;
-		sz[y] += sz[x];
-		return 0;
-	}
+    DSU(int nax) : n(nax) {
+        p.resize(n + 1);
+        sz.resize(n + 1);
+        for(int i = 0; i <= n; ++i) {
+            p[i] = i;
+            sz[i] = 1;
+        }
+    }
+    int get(int x) {
+        return x == p[x] ? x : x = get(p[x]);
+    }
+    int unite(int x, int y) {
+        x = get(x);
+        y = get(y);
+        if(x == y) {
+            return 1;
+        }
+        if(sz[x] > sz[y]) {
+            swap(x, y);
+        }
+        p[x] = y;
+        sz[y] += sz[x];
+        return 0;
+    }
 };
