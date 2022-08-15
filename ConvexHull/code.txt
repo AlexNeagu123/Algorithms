@@ -1,0 +1,87 @@
+struct point {
+    ll x, y;
+    void read() {
+        cin >> x >> y;
+    }
+    void write() {
+        cout << x << ' ' << y << '\n';
+    }
+    point &operator = (const point &him) {
+        x = him.x;
+        y = him.y;
+        return (*this);
+    }
+    point operator - (const point &B) const {
+        return point{x - B.x, y - B.y};
+    }
+    void operator -= (const point &B) {
+        x -= B.x;
+        y -= B.y;
+    }
+    ll operator * (const point &B) const {
+        return x * B.y - y * B.x;
+    }
+    ll orientation(const point &A, const point &B) const {
+        return (A - *this) * (B - *this);
+    }
+    ll dist(point A) {
+        A -= *this;
+        return A.x * A.x + A.y * A.y;
+    }
+    bool operator <(const point &A) {
+        if(x == A.x) {
+            return y < A.y;
+        }
+        return x < A.x;
+    }
+ 
+};
+ 
+class convex_hull {
+    // initialized with the vector of points 
+    // build_hull() -- builds the hull in the trigonometric order 
+    // collinear points may exist on the hull
+    // if you don't want collinear points, in build half change <= to <
+    vector<point> points;
+    int n;
+public:
+    convex_hull(vector<point> &p) : n(p.size()) {
+        points.resize(n);
+        for(int i = 0; i < n; ++i) points[i] = p[i];
+    }
+    vector<point> build_half() {
+        // shoudld be caled 2 times, once for the upper hull and then for the lower_hull
+        vector<point> hull;
+        for(int i = 0; i < n; ++i) {
+            while(hull.size() >= 2) {
+                int sz = hull.size();
+                point P1 = hull[sz - 2];
+                point P2 = hull[sz - 1];
+                if(P1.orientation(P2, points[i]) <= 0) {
+                    break;
+                }
+                hull.pop_back();
+            }
+            hull.push_back(points[i]);
+        }
+        return hull;
+    }
+    vector<point> build_hull() {
+        sort(points.begin(), points.end());
+        vector<point> upperHull = build_half();
+        reverse(points.begin(), points.end());
+        vector<point> lowerHull = build_half();
+     
+        upperHull.pop_back();
+        lowerHull.pop_back();
+        vector<point> complete_hull;
+ 
+        for(auto it : upperHull) {
+            complete_hull.push_back(it);
+        }
+        for(auto it : lowerHull) {
+            complete_hull.push_back(it);
+        }
+        return complete_hull;
+    }
+};
