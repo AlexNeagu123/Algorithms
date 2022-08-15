@@ -1,0 +1,89 @@
+const int alphabet = 2;
+
+struct nod {
+	// nod is the special structure of a nod, he has alphabet sons (26, 2 etc.)
+	int words, nr_sons;
+	nod *sons[alphabet];
+	nod() : words(0), nr_sons(0) {
+		for(int i = 0; i < alphabet; ++i) {
+			sons[i] = nullptr;
+		}
+	}
+};
+
+class Trie {
+
+	nod *head;
+
+	// used especially for numbers (their bitmasks)
+	// head is the special root node 
+	// shouldn't be initialized
+
+	// supports 2 main operations: 
+	// insert(nr) - insert the bitmask of the number nr 
+	// erase(nr) - erase the bitmasks of the number nr 
+
+	// various other functions can be implemented like: 
+	// xor_max(nr) - maximum xor between nr and any number from the set 
+	// basically any operation that has to do with the bits of the numbers 
+
+public:
+	Trie() {
+		head = new nod;
+	}
+	void insert(nod *node, int bit, int nr) {
+		if(bit == -1) {
+			node -> words += 1;
+			return;
+		} 
+		int bit_val = bool(nr & (1 << bit));
+		if(node -> sons[bit_val] == nullptr) {
+			node -> sons[bit_val] = new nod;
+			node -> nr_sons += 1;
+		}
+		insert(node -> sons[bit_val], bit - 1, nr);
+	}
+	void insert(int nr) {
+		insert(head, 31, nr);
+	}
+	bool erase(nod *node, int bit, int nr) {
+		if(bit == -1) {
+			node -> words--;
+			if(!node -> words && !node -> nr_sons) {
+				delete node;
+				return true;
+			}
+			return false;
+		}
+		int val_bit = bool(nr & (1 << bit));
+		bool nxt_erase = erase(node -> sons[val_bit], bit - 1, nr);
+		if(nxt_erase) {
+			node -> nr_sons -= 1;
+			node -> sons[val_bit] = nullptr;
+			if(!node -> words && !node -> nr_sons && node != head) {
+				delete node;
+				return true;
+			}
+		}
+		return false;	
+	}
+	void erase(int nr) {
+		erase(head, 31, nr);
+	}
+	void max_xor(nod *node, int bit, int nr, int &ans) {
+		if(bit == -1) return;
+		int val_bit = bool(nr & (1 << bit)), son;
+		if(node -> sons[val_bit ^ 1] != nullptr) {
+			ans += (1 << bit);
+			son = val_bit ^ 1;
+		} else {
+			son = val_bit;
+		}
+		max_xor(node -> sons[son], bit - 1, nr, ans);
+	}
+	int max_xor(int nr) {
+		int ans_mask = 0;
+		max_xor(head, 31, nr, ans_mask);
+		return ans_mask;
+	}
+};

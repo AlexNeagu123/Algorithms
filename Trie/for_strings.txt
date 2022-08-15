@@ -1,0 +1,97 @@
+const int alphabet = 26;
+
+struct nod {
+	// nod is the special structure of a nod, he has alphabet sons (26, 2 etc.)
+	int words, nr_sons;
+	nod *sons[alphabet];
+	nod() : words(0), nr_sons(0) {
+		for(int i = 0; i < alphabet; ++i) {
+			sons[i] = nullptr;
+		}
+	}
+};
+
+class Trie {
+
+	nod *head;
+	
+	// used especially for strings 
+	// head is the special root node 
+	// shouldn't be initialized
+
+	// supports 4 operations: 
+	// insert(word) : inserts a word 
+	// erase(word) : erase one occurence of the word
+	// word_cnt(word) : how many occurences of the world?
+	// longest_prefix(word) : longest prefix between words in the set and word
+
+public:
+	Trie() {
+		head = new nod;
+	}
+	void insert(nod *node, int pos, string &s) {
+		if(pos == s.size()) {
+			node -> words += 1;
+			return;
+		} 
+		int ch = s[pos] - 'a';
+		if(node -> sons[ch] == nullptr) {
+			node -> sons[ch] = new nod;
+			node -> nr_sons += 1;
+		}
+		insert(node -> sons[ch], pos + 1, s);
+	}
+	void insert(string &s) {
+		insert(head, 0, s);
+	}
+	bool erase(nod *node, int pos, string s) {
+		if(pos == s.size()) {
+			node -> words--;
+			if(!node -> words && !node -> nr_sons) {
+				delete node;
+				return true;
+			}
+			return false;
+		}
+		int ch = s[pos] - 'a';
+		bool nxt_erase = erase(node -> sons[ch], pos + 1, s);
+		if(nxt_erase) {
+			node -> nr_sons -= 1;
+			node -> sons[ch] = nullptr;
+			if(!node -> words && !node -> nr_sons && node != head) {
+				delete node;
+				return true;
+			}
+		}
+		return false;	
+	}
+	void erase(string &s) {
+		erase(head, 0, s);
+	}
+	int word_freq(nod *node, int pos, string &s) {
+		if(pos == s.size()) {
+			return node -> words;
+		}
+		int ch = s[pos] - 'a';
+		if(node -> sons[ch] == nullptr) {
+			return 0;
+		}
+		return word_freq(node -> sons[ch], pos + 1, s);
+	}
+	int word_freq(string &s) {
+		return word_freq(head, 0, s);
+	}
+	int longest_prefix(nod *node, int pos, string &s) {
+		if(pos == s.size()) {
+			return pos;
+		}
+		int ch = s[pos] - 'a';
+		if(node -> sons[ch] == nullptr) {
+			return pos;
+		}
+		return longest_prefix(node -> sons[ch], pos + 1, s);
+	}
+	int longest_prefix(string &s) {
+		return longest_prefix(head, 0, s);
+	}
+};
