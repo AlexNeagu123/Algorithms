@@ -1,2 +1,2 @@
 # Algorithms
-Competitive Programming Resources
+My Templates for Competitive Programming
