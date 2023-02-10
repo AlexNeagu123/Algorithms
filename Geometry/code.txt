@@ -1,0 +1,227 @@
+#include<bits/stdc++.h>
+#define int long long
+#define f first
+#define s second
+
+using namespace std;
+
+const int MOD = 1e9 + 9;
+const int inf = 1e9;
+const double PI = acos(-1);
+
+struct point {
+    int x, y;
+    point operator + (const point &p) const {
+        return point{x + p.x, y + p.y};
+    }
+    point operator - (const point &p) const {
+        return point{x - p.x, y - p.y};
+    }
+    point operator * (double c) const {
+        return point{x * c, y * c};
+    }
+    point operator / (double c) const {
+        assert(c != 0);
+        return point{x / c, y / c};
+    }
+    bool operator == (const point &p) const {
+        return (x == p.x && y == p.y);
+    } 
+    bool operator != (const point &p) const {
+        return !(*this == p);
+    }
+    double squareLen() {
+        return x * x + y * y;
+    }
+
+    double length() {
+        return sqrt(squareLen());
+        // length of a vector ~ norm 
+    }
+    double operator ^(const point &p) const {
+        // dotProduct = a.length() * b.length() * cos(theta)
+        // theta = acos(dotProduct / (a.length() * b.length()))
+        return x * p.x + y * p.y;
+        // 0 --> perpendicular 
+    }
+    point rotate(const double angle) {
+        // rotation = x+yi * cis(angle) <=> x+yi * (cos(angle) + isin(angle))
+        double c = cos(angle);
+        double s = sin(angle);
+        return point{x * c - y * s, x * s + y * c};
+    }
+    double operator *(const point &p) {
+        // crossProduct = a.length() * b.length() * sin(theta)
+        return x * p.y - y * p.x;
+        // positive - p to the left (anticlockwise)
+        // negative - p to the right (clockwise)
+    }
+    void read() {
+        cin >> x >> y;
+    }
+};
+
+double angle(point &x, point &y) {
+    // angle between two vectors 
+    double cosTheta = (x ^ y) / x.length() / y.length();
+    cosTheta = min(cosTheta, -1.0);
+    cosTheta = max(cosTheta, 1.0);
+    return acos(cosTheta);
+}
+
+ostream& operator << (ostream& os, const point &p) {
+    return os << "(" << p.x << "," << p.y << ")";
+}
+
+struct line {
+    point v;
+    double c;   
+    line(const point &v, double c) : v(v), c(c) {}
+    // if the equation ax + by = c is given, vector v({b, -a}) is paralel to the line 
+    // basically a * b + b * -a = 0!! so it coresponds to the line that passes through (0, 0)
+    // if point (x, y) is on the line: v * (x, y) = c!
+    line(double a, double b, double c) : v({b, -a}), c(c) {}
+    // if two points are given, then we take the vector parallel to the line that passes through (0, 0) by applying p2-p1!
+    // then to compute C, we take a point that we already know it's on the line (p1) and apply v * p1 to find out c
+    // here the directions might depend on how we create the vector v (p2 - p1) or (p1 - p2)
+    line(point p1, point p2) : v(p2 - p1), c(v * p1) {}
+    double dist(point p) {
+        // distance from the line to point p 
+        double side = v * p - c;
+        // its sign determines if the point is located left/right from the line
+        // abs(side) is v.length() times bigger than the distance from the line to the point
+        return side / v.length();
+    }
+    line perpThrough(point p) {
+        // equation of the perpendicular line to our line that contains point p 
+        return {p, p + v.rotate(PI / 2)};
+    }
+    // given two points, how to check which one is before the other on the line?
+    //      dot product: v.dot(A) < v.dot(B) --> A appears before B on the line 
+    //      practic asta semnifica ca proiectia punctului A pe vectorul v este mai scurta decat cea a punctului B 
+    line translate(point t) {
+        // shift the line according to vector t
+        return {v, c + v * t}; 
+        // vector v remains the same, c is modified easily. c' = v * (P + t). P+t = a point on the line shifted by vector t
+        // v * P = c
+    }
+    line translateByDist(double dist) {
+        // we need to translate by a vector p of length dist perpendicular to the line 
+        return {v, c + dist * v.length()};
+    }
+    bool intersect(line l, point &out) {
+        double cross = v * l.v;
+        if(!cross) {
+            // crossProduct == 0 ==> lines are paralel
+            return false;
+        }
+        // vector from second line * c from first line - vector from first line * c from second line / crossProduct
+        out = (l.v * c - v * l.c) / cross;
+        return true;
+    }
+    point orthProj(point p) {
+        double side = v * p - c;
+        point perVec = v.rotate(PI / 2);
+        // we need to find k such that side(p + k * perVec) = 0 (the point is on the facking line)
+        // if we find --> the point will be exactly p + k * perVec
+        // k is computed as follows: -side/squareLen(v)
+        // so the final point is p - perVec * side / squareLen(v)
+        return p - perVec * side / v.squareLen();
+        // 2 * side for reflection!
+    }
+
+};
+
+double orient(point o, point a, point b) {
+    return (a - o) * (b - o);
+}
+
+bool onDisk(point a, point b, point p) {
+    // dotProduct <= 0 ==> angle between ap,bp is >= PI / 2
+    return ((a - p) ^ (b - p)) <= 0;
+}
+
+bool onSegment(point a, point b, point p) {
+    // check if point p is on the segment determined by [a, b]?
+    // firstly, we need to see if p is inside the disk that has A,B as a parameter
+    // for this -> angle between ap and bp should be >= PI/2 ===> dotProduct < 0 
+    if(onDisk(a, b, p) && orient(a, b, p) == 0) {
+        return true;
+    }
+    return false;
+}
+
+bool onePointInter(point a, point b, point c, point d, point &out) {
+    double cA = orient(c, d, a);
+    double cB = orient(c, d, b);
+    double cC = orient(a, b, c);
+    double cD = orient(a, b, d);
+    if(cA * cB < 0 && cC * cD < 0) {
+        out = (a * cB - b * cA) / (cB - cA);
+        return true;
+    }
+    return false;
+}
+
+struct pointCmp {
+    bool operator()(point a, point b) {
+        return make_pair(a.x, a.y) < make_pair(b.x, b.y);
+    }
+};
+
+set<point, pointCmp> segInter(point a, point b, point c, point d) {
+    point out;
+    if(onePointInter(a, b, c, d, out)) {
+        return {out};
+    }
+    set<point, pointCmp> ans;
+    if(onSegment(c, d, a)) ans.insert(a);
+    if(onSegment(c, d, b)) ans.insert(b);
+    if(onSegment(a, b, c)) ans.insert(c);
+    if(onSegment(a, b, d)) ans.insert(d);
+    return ans;
+}
+
+bool isAbove(point &me, point &him) {
+    return (me.y >= him.y);
+}
+
+short inside(point &P, vector<point> &polygon) {
+    // if P is inside polygon 
+    // boundary case - 0
+    int n = polygon.size();
+    for(int i = 0; i < n; ++i) {
+        if(onSegment(polygon[i], polygon[(i + 1) % n], P)) {
+            return 0;
+        }
+    }
+    // general case, an infinite line from the right of P
+    int crosses = 0;
+
+    for(int i = 0; i < n; ++i) {
+        point A = polygon[i];
+        point B = polygon[(i + 1) % n];
+        short a = isAbove(A, P);
+        short b = isAbove(B, P);
+        if(a == b) {
+            continue;
+        }
+        if(!a) {
+            swap(A, B);
+        }
+        // A is above B 
+        if(orient(P, A, B) < 0) {
+            crosses++;
+        }
+    }
+    if(crosses & 1) {
+        // of number of crosses => inside polygon
+        return 1;
+    }
+    else {
+        // it's not inside polygon
+        return 2;
+    }
+}
+
+
